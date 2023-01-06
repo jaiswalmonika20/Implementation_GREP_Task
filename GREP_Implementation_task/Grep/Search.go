@@ -10,11 +10,24 @@ import (
 
 func Search(pattern string, flag, selectfile []string) []string {
 	output := []string{}
-	for _, flagno := range flag {
-		if len(flagno)==2{
-		output = append(output, choosesingleflag(flagno, pattern, selectfile)...)
-		} else{
-			output=append(output,choosemultipleflag(pattern,flagno,file)...)
+	str := ""
+
+	if len(flag) == 0 && len(selectfile) == 1 {
+		fmt.Println("hi")
+
+		output = append(output, ZeroflagSinglefile(pattern, str, selectfile)...)
+	} else if len(flag) == 0 && len(selectfile) != 1 {
+
+		output = append(output, ZeroflagMultiplefile(pattern, str, selectfile)...)
+	} else {
+		for _, flagno := range flag {
+
+			//
+			if len(flagno) == 2 {
+				output = append(output, singleflagmultiplefiles(flagno, pattern, selectfile)...)
+			} else {
+				output = append(output, multipleflagmultiplefiles(pattern, flagno, selectfile)...)
+			}
 		}
 	}
 	return output
@@ -32,7 +45,35 @@ func filelines(files string) []string {
 	return content
 }
 
-func choosesingleflag(flag, pattern string, files []string) []string {
+func ZeroflagSinglefile(pattern, flag string, files []string) []string {
+	result := []string{}
+	for _, fileno := range files {
+		filecontent := filelines(fileno)
+		for _, line := range filecontent {
+			if strings.Contains(line, pattern) {
+				result = append(result, fileno+":"+pattern)
+			}
+		}
+	}
+	return result
+
+}
+
+func ZeroflagMultiplefile(pattern, flag string, files []string) []string {
+	result := []string{}
+	for _, fileno := range files {
+		filecontent := filelines(fileno)
+		for _, line := range filecontent {
+			if strings.Contains(line, pattern) {
+				result = append(result, fileno+":"+pattern)
+			}
+		}
+	}
+	return result
+
+}
+
+func singleflagmultiplefiles(flag, pattern string, files []string) []string {
 	result := []string{}
 	if flag == "-n" {
 		for _, fileno := range files {
@@ -40,7 +81,7 @@ func choosesingleflag(flag, pattern string, files []string) []string {
 			for index, line := range filecontent {
 				if strings.Contains(line, pattern) {
 					linenumber := strconv.Itoa(index + 1)
-					result = append(result, fileno+":"+linenumber+"-"+pattern)
+					result = append(result, fileno+":"+linenumber+"-"+line)
 				}
 			}
 		}
@@ -95,27 +136,31 @@ func choosesingleflag(flag, pattern string, files []string) []string {
 	return result
 }
 
-func choosemultipleflag(pattern string,flag,files []string,)[]string{
-	result:=[]string{}
-	mapflags:=map[string]int{"-n":0,"-l":0,"-i":0,"-v":0,"-x":0}
-	for _ ,choosenflag := range flag{
-		mapflags[choosenflag]=1
+func multipleflagmultiplefiles(pattern, flag string, files []string) []string {
+	result := []string{}
+	mapflags := map[string]int{"n": 0, "l": 0, "i": 0, "v": 0, "x": 0}
+
+	res1 := strings.Split(flag, "-")
+	for _, choosenflag := range res1 {
+		mapflags[choosenflag] = 1
 	}
 
-	if (mapflags["-n"]==1 && mapflags["-i"]==1){
+	if mapflags["n"] == 1 && mapflags["i"] == 1 {
 		for _, fileno := range files {
 			filecontent := filelines(fileno)
-			for index, line := range filecontent{
-				if strings.Contains(strings.ToLower(line), strings.ToLower(pattern))
-				linenumber := strconv.Itoa(index + 1)
-					result = append(result, fileno+":"+linenumber+"-"+pattern)
+			for index, line := range filecontent {
+				if strings.Contains(strings.ToLower(line), strings.ToLower(pattern)) {
+					linenumber := strconv.Itoa(index + 1)
+					result = append(result, fileno+":"+linenumber+"-"+line)
+				}
 
 			}
 		}
-	} else if (mapflags["-l"] == 1 ; mapflags["-n"] == 1){
+	} else if mapflags["l"] == 1 && mapflags["n"] == 1 {
 		for _, fileno := range files {
+			var status int
 			filecontent := filelines(fileno)
-			for index, line := range filecontent{
+			for _, line := range filecontent {
 				status = 0
 				if strings.Contains(line, pattern) {
 					fmt.Println("bye")
@@ -126,24 +171,24 @@ func choosemultipleflag(pattern string,flag,files []string,)[]string{
 			if status == 1 {
 				result = append(result, fileno)
 			}
-			
+
 		}
-	} else if (mapflags["-x"]==1 && mapflags["-n"]==1){
+	} else if mapflags["x"] == 1 && mapflags["n"] == 1 {
 		for _, fileno := range files {
 			filecontent := filelines(fileno)
-			for index, line := range filecontent{
+			for index, line := range filecontent {
 				if pattern == line {
 					linenumber := strconv.Itoa(index + 1)
-					result = append(result, fileno+":"+linenumber+"-"+pattern)
+					result = append(result, fileno+":"+linenumber+"-"+line)
 				}
-
 
 			}
 		}
-	} else if (mapflags["-l"]==1 && mapflags["-i"]==1){
+	} else if mapflags["l"] == 1 && mapflags["i"] == 1 {
 		for _, fileno := range files {
+			var status int
 			filecontent := filelines(fileno)
-			for index, line := range filecontent{
+			for _, line := range filecontent {
 				status = 0
 				if strings.Contains(strings.ToLower(line), strings.ToLower(pattern)) {
 					status = 1
@@ -154,11 +199,12 @@ func choosemultipleflag(pattern string,flag,files []string,)[]string{
 				result = append(result, fileno)
 			}
 		}
-	} else if (mapflags["-l"]==1 && mapflags["-x"]==1){
+	} else if mapflags["l"] == 1 && mapflags["x"] == 1 {
 		for _, fileno := range files {
+			var status int
 			filecontent := filelines(fileno)
-			for index, line := range filecontent{
-				status=0
+			for _, line := range filecontent {
+				status = 0
 				if pattern == line {
 					status = 1
 					break
@@ -168,20 +214,20 @@ func choosemultipleflag(pattern string,flag,files []string,)[]string{
 				result = append(result, fileno)
 			}
 		}
-}else if (mapflags["-i"]==1 && mapflags["-x"]==1){
-	for _, fileno := range files {
-		filecontent := filelines(fileno)
-		for index, line := range filecontent{
-			if pattern == line{
-				if strings.Contains(strings.ToLower(line), strings.ToLower(pattern)) {
-					result = append(result, line)
+	} else if mapflags["i"] == 1 && mapflags["x"] == 1 {
+		for _, fileno := range files {
+			filecontent := filelines(fileno)
+			for _, line := range filecontent {
+				if pattern == line {
+					if strings.Contains(strings.ToLower(line), strings.ToLower(pattern)) {
+						result = append(result, line)
+					}
+				}
 			}
-		}
-		}
-	}
-} else {
-	result=append(result,[]string{})
 
-}
-return result
+		}
+	} else {
+		result = []string{}
+	}
+	return result
 }
