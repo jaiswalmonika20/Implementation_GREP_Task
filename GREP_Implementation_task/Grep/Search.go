@@ -13,8 +13,6 @@ func Search(pattern string, flag, selectfile []string) []string {
 	str := ""
 
 	if len(flag) == 0 && len(selectfile) == 1 {
-		fmt.Println("hi")
-
 		output = append(output, ZeroflagSinglefile(pattern, str, selectfile)...)
 	} else if len(flag) == 0 && len(selectfile) != 1 {
 
